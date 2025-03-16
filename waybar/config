@@ -1,0 +1,94 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 56,
+  "modules-left": ["temperature", "cpu", "custom/gpu", "memory"],
+  "modules-center": ["hyprland/workspaces", "custom/new-workspace"],
+  "modules-right": ["clock", "network", "bluetooth", "pulseaudio", "battery", "custom/power"],
+  "hyprland/workspaces": {
+    "format": "{icon}",
+    "format-icons": {
+      "default": "<span color='#FFFACD'>●</span>",
+      "active": "<span color='#fdff00'>󰮯</span>",
+      "urgent": "<span color='#ea82e5'>󰊠</span>"
+    },
+    "persistent_workspaces": {
+      "*": 10
+    }
+  },
+  "custom/new-workspace": {
+    "format": "󰊠",
+    "on-click": "hyprctl dispatch workspace empty",
+    "tooltip": false
+  },
+  "temperature": {
+    "format": "<span color='#ffadad'>{icon}</span> {temperatureC}°C",
+    "format-icons": {
+      "default": "",
+      "low": "",
+      "normal": "",
+      "high": "",
+      "critical": ""
+    },
+    "critical-threshold": 80,
+    "interval": 5,
+    "tooltip": false
+  },
+  "cpu": {
+    "format": "<span color='#ffd6a5'></span> {usage}%",
+    "interval": 5,
+    "tooltip": false
+  },
+  "custom/gpu": {
+    "format": "<span color='#fdffb6'>󰢮</span> {}",
+    "exec": "~/.config/waybar/scripts/gpu_usage.sh",
+    "interval": 5,
+    "tooltip": false
+  },
+  "memory": {
+    "format": "<span color='#caffbf'>\uefc5</span> {percentage}%",
+    "interval": 5,
+    "tooltip": false
+  },
+  "clock": {
+    "format": "<span color='#9bf6ff'></span> {:%H:%M}",
+    "tooltip-format": "󰸗 {:%d.%m.%Y}",
+    "interval": 60
+  },
+  "network": {
+    "format-ethernet": "<span color='#a0c4ff'>󰈀</span>",
+    "format-wifi": "<span color='#a0c4ff'>󰤨</span>",
+    "format-disconnected": "<span color='#a0c4ff'>󰤭</span>",
+    "tooltip": true,
+    "tooltip-format": " {ifname}\n󰑩 {essid}\n󰣺 {signalStrength}%"
+  },
+  "bluetooth": {
+    "format": "<span color='#bdb2ff'>󰂯</span>", // {icon}
+    "format-connected": "󰂱",
+    "format-disconnected": "󰂯",
+    "format-disabled": "󰂲",
+    "interval": 5,
+    "tooltip": false
+  },
+  "pulseaudio": {
+    "format": "<span color='#ffc6ff'>{icon}</span>",
+    "format-muted": "<span color='#ffc6ff'></span>",
+    "format-icons": {
+      "default": ["", "", ""]
+    },
+    "scroll-step": 1,
+    "on-click": "pavucontrol",
+    "tooltip": false
+  },
+  "battery": {
+    "format": "<span color='#ff9ed7'>{icon}</span>",
+	"tooltip-format": "{capacity}%",
+    "format-icons": ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"],
+    "interval": 5,
+  },
+  "custom/power": {
+    "format": "",
+    "on-click": "wlogout",
+    "tooltip": false
+  }
+}
