@@ -6,40 +6,86 @@ configuration {
 
 window {
 	width: 360px;
+	height: 646px;
+	padding: 8px;
 	border: 4px;
+	border-color: #b072d1;
 	border-radius: 16px;
+	background-color: #201d2aD9;
 	children: [mainbox];
 }
 
 mainbox {
-	spacing: 0px;
-	children: [inputbar, listview, mode-switcher];
+	background: transparent;
+	spacing: 8px;
+	children: [inputbar, listview];
 }
 
 inputbar {
 	border: 0px;
+	border-radius: 10px;
 	padding: 16px;
+	background-color: #4b455f;
 	children: [entry];
 }
 
 entry {
+	text-color: #625a7c;
 	placeholder: " ";
 }
 
 listview {
 	border: 0px;
+	background-color: #00000000;
 	scrollbar: false;
 	children: [element];
 }
 
 element {
 	padding: 16px;
-	border: 2px;
-	border-radius: 8px;
+	border: 0px;
+	border-radius: 10px;
 	children: [element-icon, element-text];
 }
 
-element, element-icon, element-text, button {
+element.normal.normal {
+	background-color: #00000000;
+}
+
+element.normal.urgent {
+	background-color: #2c2839;
+}
+
+element.normal.active {
+	background-color: #00000000;
+}
+
+element.selected.normal {
+	background-color: #2c2839;
+}
+
+element.selected.urgent {
+	background-color: #2c2839;
+}
+
+element.selected.active {
+	background-color: #2c2839;
+}
+
+element.alternate.normal {
+	background-color: #00000000;
+}
+
+element.alternate.urgent {
+	background-color: #00000000;
+}
+
+element.alternate.active {
+	background-color: #00000000;
+}
+
+element, element-icon, element-text {
+	text-color: #efebff;
 	cursor: pointer;
 }
 
@@ -65,6 +111,5 @@ button-filebrowser {
 }
 
 button-drun, button-window, button-ssh, button-filebrowser {
-	background: transparent;
 	cursour: pointer;
 }
