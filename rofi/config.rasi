@@ -18,7 +18,7 @@ window {
 mainbox {
 	background: transparent;
 	spacing: 8px;
-	children: [inputbar, listview];
+	children: [inputbar, mode-switcher, listview];
 }
 
 inputbar {
@@ -70,24 +70,6 @@ element, element-icon, element-text {
 
 mode-switcher {
 	padding: 16px 0px;
-	children: [button-drun, button-window, button-ssh, button-filebrowser];
-}
-
-button-drun {
-	str: "hui";
-	action: "rofi -show drun";
-}
-
-button-window {
-	action: "rofi -show window";
-}
-
-button-ssh {
-	action: "rofi -show ssh";
-}
-
-button-filebrowser {
-	action: "rofi -show filebrowser";
 }
 
 button-drun, button-window, button-ssh, button-filebrowser {
