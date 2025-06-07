@@ -6,7 +6,7 @@ configuration {
 
 window {
 	width: 360px;
-	height: 646px;
+	height: 646px; /*652px with mode-switcher, and 646px without*/
 	padding: 8px;
 	border: 4px;
 	border-color: #b072d1;
@@ -48,40 +48,19 @@ element {
 	children: [element-icon, element-text];
 }
 
-element.normal.normal {
-	background-color: #00000000;
-}
-
-element.normal.urgent {
-	background-color: #2c2839;
-}
-
-element.normal.active {
-	background-color: #00000000;
-}
-
-element.selected.normal {
-	background-color: #2c2839;
-}
-
-element.selected.urgent {
-	background-color: #2c2839;
-}
-
-element.selected.active {
-	background-color: #2c2839;
-}
-
-element.alternate.normal {
-	background-color: #00000000;
-}
-
-element.alternate.urgent {
-	background-color: #00000000;
-}
-
+element.normal.normal,
+element.normal.urgent,
+element.normal.active,
+element.alternate.normal,
+element.alternate.urgent,
 element.alternate.active {
 	background-color: #00000000;
+}
+
+element.selected.normal,
+element.selected.urgent,
+element.selected.active {
+	background-color: #2c2839;
 }
 
 element, element-icon, element-text {
@@ -95,6 +74,7 @@ mode-switcher {
 }
 
 button-drun {
+	str: "hui";
 	action: "rofi -show drun";
 }
 
@@ -111,5 +91,6 @@ button-filebrowser {
 }
 
 button-drun, button-window, button-ssh, button-filebrowser {
+	text-color: #ca80ff;
 	cursour: pointer;
 }
