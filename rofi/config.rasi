@@ -1,0 +1,70 @@
+configuration {
+	modi: "drun,window,ssh,filebrowser";
+	show-icons: true;
+	drun-display-format: "{name}";
+}
+
+window {
+	width: 360px;
+	border: 4px;
+	border-radius: 16px;
+	children: [mainbox];
+}
+
+mainbox {
+	spacing: 0px;
+	children: [inputbar, listview, mode-switcher];
+}
+
+inputbar {
+	border: 0px;
+	padding: 16px;
+	children: [entry];
+}
+
+entry {
+	placeholder: " ";
+}
+
+listview {
+	border: 0px;
+	scrollbar: false;
+	children: [element];
+}
+
+element {
+	padding: 16px;
+	border: 2px;
+	border-radius: 8px;
+	children: [element-icon, element-text];
+}
+
+element, element-icon, element-text, button {
+	cursor: pointer;
+}
+
+mode-switcher {
+	padding: 16px 0px;
+	children: [button-drun, button-window, button-ssh, button-filebrowser];
+}
+
+button-drun {
+	action: "rofi -show drun";
+}
+
+button-window {
+	action: "rofi -show window";
+}
+
+button-ssh {
+	action: "rofi -show ssh";
+}
+
+button-filebrowser {
+	action: "rofi -show filebrowser";
+}
+
+button-drun, button-window, button-ssh, button-filebrowser {
+	background: transparent;
+	cursour: pointer;
+}
