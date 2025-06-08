@@ -36,7 +36,7 @@ dwindle {
 	smart_split=true
 	smart_resizing=true
 	pseudotile=true
-	preserve_split=yes
+	preserve_split=true
 }
 
 decoration {
@@ -51,10 +51,13 @@ misc {
 	disable_hyprland_logo=true
 }
 
-windowrulev2 = float,title:.*
+windowrulev2=float,title:.*
+
+bindm=SUPER,mouse:272,movewindow
 
 bind=SUPER,t,exec,kitty
 bind=SUPER,r,exec,rofi -show drun
+bind=SUPER,g,togglefloating
 bind=SUPER,q,killactive,
 bind=SUPER,f,fullscreen,0
 
@@ -73,5 +76,9 @@ bind=SUPER,mouse_up,workspace,e+1
 bind=SUPER,left,workspace,e-1
 bind=SUPER,right,workspace,e+1
 
-bind=,XF86MonBrightnessUp,exec,brightnessctl set +5%
+bind=,XF86MonBrightnessUp,exec,brightnessctl set 5%+
 bind=,XF86MonBrightnessDown,exec,brightnessctl set 5%-
+
+bind=,XF86AudioMute,exec,pactl set-sink-mute @DEFAULT_SINK@ toggle
+bind=,XF86AudioLowerVolume,exec,pactl set-sink-volume @DEFAULT_SINK@ -5%
+bind=,XF86AudioRaiseVolume,exec,pactl set-sink-volume @DEFAULT_SINK@ +5%

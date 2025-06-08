@@ -18,7 +18,7 @@ window {
 mainbox {
 	background: transparent;
 	spacing: 8px;
-	children: [inputbar, mode-switcher, listview];
+	children: [inputbar, listview];
 }
 
 inputbar {
@@ -31,7 +31,7 @@ inputbar {
 
 entry {
 	text-color: #625a7c;
-	placeholder: " ";
+	placeholder: " Search";
 }
 
 listview {
