@@ -53,5 +53,5 @@ while true; do
     fi
 
     last_charging_state=$current_charging_state
-    sleep 60
+    # sleep 60
 done
