@@ -25,7 +25,7 @@ window#waybar > box {
 #custom-power,
 #custom-new-workspace {
     padding: 0 8px;
-    background-color: rgba(40, 42, 54, 0.85);
+    background-color: rgba(32, 29, 42, 0.85);
 }
 
 #temperature {
