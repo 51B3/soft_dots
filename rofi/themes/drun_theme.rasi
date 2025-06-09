@@ -1,12 +1,13 @@
 configuration {
-	modi: "drun,window,ssh,filebrowser";
+	modi: "drun";
 	show-icons: true;
-	drun-display-format: "{name}";
+	case-sensitive: true;
+	drun-display-format: "{icon} {name}";
 }
 
 window {
 	width: 360px;
-	height: 646px; /*652px with mode-switcher, and 646px without*/
+	height: 606px;
 	padding: 8px;
 	border: 4px;
 	border-color: #b072d1;
@@ -16,7 +17,7 @@ window {
 }
 
 mainbox {
-	background: transparent;
+	background-color: #00000000;
 	spacing: 8px;
 	children: [inputbar, listview];
 }
@@ -30,6 +31,7 @@ inputbar {
 }
 
 entry {
+	background-color: #00000000;
 	text-color: #625a7c;
 	placeholder: " Search";
 }
@@ -64,15 +66,11 @@ element.selected.active {
 }
 
 element, element-icon, element-text {
+	background-color: #00000000;
 	text-color: #efebff;
 	cursor: pointer;
 }
 
-mode-switcher {
-	padding: 16px 0px;
-}
-
-button-drun, button-window, button-ssh, button-filebrowser {
-	text-color: #ca80ff;
-	cursour: pointer;
+element-icon {
+	size: 24px;
 }

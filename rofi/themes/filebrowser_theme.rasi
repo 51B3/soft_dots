@@ -1,0 +1,92 @@
+configuration {
+    modi: "filebrowser";
+    filebrowser-dir: "~/";
+    filebrowser-format: "{icon} {name}";
+    filebrowser-preview: true;
+    filebrowser-show-hidden: true;
+	case-sensitive: true;
+    show-icons: true;
+}
+
+window {
+	width: 1280px;
+	height: 720px;
+    background-color: #201d2aD9;
+	padding: 8px;
+	border: 4px;
+	border-color: #b072d1;
+	children: [wrap, listview];
+}
+
+wrap {
+	expand: false;
+	background-color: #00000000;
+    orientation: vertical;
+	spacing: 8px;
+    children: [inputbar, message];
+}
+
+inputbar {
+	border: 0px;
+	border-radius: 10px;
+	padding: 16px;
+	background-color: #4b455f;
+    children: [entry];
+}
+
+entry {
+	background-color: #00000000;
+	text-color: #625a7c;
+    placeholder: "  Search";
+}
+
+message {
+	background-color: #00000000;
+	text-color: #efebff;
+}
+
+listview {
+    flow: horizontal;
+    fixed-columns: true;
+    columns: 5;
+	padding: 8px 0px 0px 0px;
+	spacing: 8px;
+	background-color: #00000000;
+}
+
+element {
+	background-color: #00000000;
+	border-radius: 16px;
+    orientation: vertical;
+	children: [element-icon, element-text];
+}
+
+element-icon {
+    size: calc(((100% - 8em) / 7 )); /**/
+	horizontal-align: 0.5;
+	vertical-align: 0.5;
+	background-color: #00000000;
+}
+
+element-text {
+	horizontal-align: 0.5;
+	vertical-align: 0.5;
+	text-color: #efebff;
+	background-color: #00000000;
+}
+
+element.normal.normal,
+element.normal.urgent,
+element.normal.active,
+element.alternate.normal,
+element.alternate.urgent,
+element.alternate.active {
+	background-color: #00000000;
+}
+
+element.selected.normal,
+element.selected.urgent,
+element.selected.active {
+	background-color: #2c2839;
+}
+
