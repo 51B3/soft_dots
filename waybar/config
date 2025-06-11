@@ -37,38 +37,42 @@
   "cpu": {
     "format": "<span color='#ffd6a5'></span> {usage}%",
     "interval": 5,
-    "tooltip": false
+	"tooltip": false,
+	"on-click": "kitty btop"
   },
   "custom/gpu": {
-    "format": "<span color='#fdffb6'>󰢮</span> {}",
-    "exec": "~/.config/waybar/scripts/gpu_usage.sh",
-    "interval": 5,
-    "tooltip": false
+	"format": "<span color='#fdffb6'>\udb82\udcae</span> N/A",
+	"interval": 5,
+	"tooltip": false,
+	"on-click": "kitty btop"
   },
   "memory": {
     "format": "<span color='#caffbf'>\uefc5</span> {percentage}%",
     "interval": 5,
-    "tooltip": false
+	"tooltip": false,
+	"on-click": "kitty btop"
   },
   "clock": {
-    "format": "<span color='#9bf6ff'></span> {:%H:%M}",
+    "format": "<span color='#9bf6ff'></span> {:%H:%M}",
     "tooltip-format": "󰸗 {:%d.%m.%Y}",
     "interval": 60
   },
   "network": {
     "format-ethernet": "<span color='#a0c4ff'>󰈀</span>",
-    "format-wifi": "<span color='#a0c4ff'>󰤨</span>",
-    "format-disconnected": "<span color='#a0c4ff'>󰤭</span>",
+    "format-wifi": "<span color='#a0c4ff'>󰖩</span>",
+    "format-disconnected": "<span color='#a0c4ff'>󰪎</span>",
     "tooltip": true,
-    "tooltip-format": " {ifname}\n󰑩 {essid}\n󰣺 {signalStrength}%"
+    "tooltip-format": " {ifname}\n󰑩 {essid}\n󰣺 {signalStrength}%",
+	"on-click": "kitty connmanctl"
   },
   "bluetooth": {
-    "format": "<span color='#bdb2ff'>󰂯</span>", // {icon}
-    "format-connected": "󰂱",
-    "format-disconnected": "󰂯",
-    "format-disabled": "󰂲",
+	"format": "<span color='#bdb2ff'>󰂯</span>",
+    "format-connected": "<span color='#bdb2ff'>󰂱</span>",
+    "format-disconnected": "<span color='#bdb2ff'>󰂯</span>",
+    "format-disabled": "<span color='#bdb2ff'>󰂲</span>",
     "interval": 5,
-    "tooltip": false
+	"tooltip-format-connected": "󰾰 {device_alias}",
+	"on-click": "kitty bluetoothctl"
   },
   "pulseaudio": {
     "format": "<span color='#ffc6ff'>{icon}</span>",
@@ -77,12 +81,14 @@
       "default": ["", "", ""]
     },
     "scroll-step": 1,
-    "on-click": "pavucontrol",
-    "tooltip": false
+    "on-click": "kitty alsamixer",
+    "tooltip": true,
+	"tooltip-format": "󰺢 {volume}%",
+	"hide-on-no-sink": false
   },
   "battery": {
     "format": "<span color='#ff9ed7'>{icon}</span>",
-	"tooltip-format": "{capacity}%",
+	"tooltip-format": "󱐋 {capacity}%",
     "format-icons": ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"],
     "interval": 5,
   },
