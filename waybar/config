@@ -8,7 +8,7 @@
   "hyprland/workspaces": {
     "format": "{icon}",
     "format-icons": {
-      "default": "<span color='#FFFACD'>●</span>",
+      "default": "<span color='#FFFACD'>⚫</span>",
       "active": "<span color='#fdff00'>󰮯</span>",
       "urgent": "<span color='#ea82e5'>󰊠</span>"
     },
