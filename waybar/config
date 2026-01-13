@@ -2,9 +2,9 @@
   "layer": "top",
   "position": "top",
   "height": 56,
-  "modules-left": ["temperature", "cpu", "custom/gpu", "memory"],
+  "modules-left": ["temperature", "cpu", "memory"],
   "modules-center": ["hyprland/workspaces", "custom/new-workspace"],
-  "modules-right": ["clock", "network", "bluetooth", "pulseaudio", "battery", "custom/power"],
+  "modules-right": ["clock", "network", "bluetooth", "custom/volume", "battery", "custom/power"],
   "hyprland/workspaces": {
     "format": "{icon}",
     "format-icons": {
@@ -40,12 +40,6 @@
 	"tooltip": false,
 	"on-click": "kitty btop"
   },
-  "custom/gpu": {
-	"format": "<span color='#fdffb6'>\udb82\udcae</span> N/A",
-	"interval": 5,
-	"tooltip": false,
-	"on-click": "kitty btop"
-  },
   "memory": {
     "format": "<span color='#caffbf'>\uefc5</span> {percentage}%",
     "interval": 5,
@@ -74,23 +68,20 @@
 	"tooltip-format-connected": "󰾰 {device_alias}",
 	"on-click": "kitty bluetoothctl"
   },
-  "pulseaudio": {
-    "format": "<span color='#ffc6ff'>{icon}</span>",
-    "format-muted": "<span color='#ffc6ff'></span>",
-    "format-icons": {
-      "default": ["", "", ""]
-    },
-    "scroll-step": 1,
-    "on-click": "kitty alsamixer",
-    "tooltip": true,
-	"tooltip-format": "󰺢 {volume}%",
-	"hide-on-no-sink": false
-  },
+	"custom/volume": {
+		"format": "{}",
+    		"exec": "/home/arch/.config/waybar/scripts/volume.sh",
+    		"return-type": "json",
+    		"interval": 5,
+    		"on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+    		"on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +5%",
+    		"on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -5%"
+	},
   "battery": {
     "format": "<span color='#ff9ed7'>{icon}</span>",
 	"tooltip-format": "󱐋 {capacity}%",
     "format-icons": ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"],
-    "interval": 5,
+    "interval": 5
   },
   "custom/power": {
     "format": "",
