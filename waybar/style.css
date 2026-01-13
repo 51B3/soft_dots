@@ -19,7 +19,7 @@ window#waybar > box {
 #memory,
 #network,
 #bluetooth,
-#pulseaudio,
+#custom-volume,
 #battery,
 #clock,
 #custom-power,
@@ -88,6 +88,6 @@ window#waybar > box {
     color: #ff5555;
 }
 
-#pulseaudio.muted {
+#custom-volume.muted {
     color: #ff5555;
 }
