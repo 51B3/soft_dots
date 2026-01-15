@@ -55,6 +55,14 @@ window#waybar > box {
     background-color: transparent;
 }
 
+#workspaces button:hover {
+    box-shadow: none;
+    text-shadow: none;
+    background: none;
+    border-color: transparent;
+    transition: none;
+}
+
 #workspaces button.active {
     color: #ff79c6;
 }
