@@ -1,5 +1,7 @@
+sudo pacman -Syu
+sudo pacman -S kitty fastfetch brrtfetch waybar btop rofi mako wlogout nautilus swaybg
 sudo pacman -S --needed base-devel git
 git clone https://aur.archlinux.org/yay.git
 cd yay && makepkg -si
-sudo pacman -S kitty fastfetch brrtfetch waybar btop rofi mako wlogout
+yay -Syu
 yay -S nerd-fonts
