@@ -1,13 +1,13 @@
 import sys
 import dbus
 import requests
+import traceback
 
 from PIL import Image
 from io import BytesIO
 from urllib.parse import unquote
-from dbus.mainloop.glib import DBusGMainLoop
-
 from PyQt6.QtCore import Qt, QTimer
+from dbus.mainloop.glib import DBusGMainLoop
 from PyQt6.QtGui import (
     QImage,
     QPixmap,
@@ -98,13 +98,17 @@ class MPRIS:
         self.properties = None
         self.player = None
         self.last_art = None
+        self.connected = False
     
     
     def get_players(self):
-        return [
-            s for s in self.bus.list_names()
-            if s.startswith('org.mpris.MediaPlayer2.')
-        ]
+        try:
+            return [
+                s for s in self.bus.list_names()
+                if s.startswith('org.mpris.MediaPlayer2.')
+            ]
+        except:
+            return []
     
     
     def connect(self, name):
@@ -114,28 +118,42 @@ class MPRIS:
             self.properties = dbus.Interface(obj, 'org.freedesktop.DBus.Properties')
             self.player = dbus.Interface(obj, 'org.mpris.MediaPlayer2.Player')
             self.current_player = name
+            self.connected = True
             
             return True
         except:
+            self.connected = False
             return False
     
     
     def metadata(self):
-        if not self.properties:
+        if not self.properties or not self.connected:
             return {}
         
-        md = self.properties.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
-        
-        return {
-            'title': md.get('xesam:title', ''),
-            'artist': ', '.join(md.get('xesam:artist', [])),
-            'art': md.get('mpris:artUrl', ''),
-            'length': md.get('mpris:length', 0) / 1_000_000
-        }
+        try:
+            md = self.properties.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
+            
+            return {
+                'title': md.get('xesam:title', ''),
+                'artist': ', '.join(md.get('xesam:artist', [])),
+                'art': md.get('mpris:artUrl', ''),
+                'length': md.get('mpris:length', 0) / 1_000_000
+            }
+        except dbus.exceptions.DBusException as e:
+            if "NoActivePlayer" in str(e) or "No player" in str(e):
+                self.connected = False
+                self.properties = None
+                self.player = None
+                self.current_player = None
+            return {}
+        except Exception:
+            return {}
     
     
     def position(self):
         try:
+            if not self.properties or not self.connected:
+                return 0
             return self.properties.Get(
                 'org.mpris.MediaPlayer2.Player',
                 'Position'
@@ -146,6 +164,8 @@ class MPRIS:
     
     def status(self):
         try:
+            if not self.properties or not self.connected:
+                return 'Stopped'
             return str(self.properties.Get(
                 'org.mpris.MediaPlayer2.Player', 'PlaybackStatus'
             ))
@@ -154,18 +174,27 @@ class MPRIS:
     
     
     def play_pause(self):
-        if self.player:
-            self.player.PlayPause()
+        if self.player and self.connected:
+            try:
+                self.player.PlayPause()
+            except:
+                self.connected = False
     
     
     def next(self):
-        if self.player:
-            self.player.Next()
+        if self.player and self.connected:
+            try:
+                self.player.Next()
+            except:
+                self.connected = False
     
     
     def prev(self):
-        if self.player:
-            self.player.Previous()
+        if self.player and self.connected:
+            try:
+                self.player.Previous()
+            except:
+                self.connected = False
 
 
 class AudioPlayer(QWidget):
@@ -346,43 +375,67 @@ class AudioPlayer(QWidget):
     
     def start_timer(self):
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update)
+        self.timer.timeout.connect(self.update_ui)
         self.timer.start(500)
     
     
-    def update(self):
+    def update_ui(self):
         def set_elided_text(label: QLabel, text: str):
             fm = QFontMetrics(label.font())
             elided = fm.elidedText(text, Qt.TextElideMode.ElideRight, label.width())
             label.setText(elided)
         
-        if not self.mpris.current_player:
-            for p in self.mpris.get_players():
+        if not self.mpris.connected or not self.mpris.current_player:
+            players = self.mpris.get_players()
+            connected = False
+            for p in players:
                 if self.mpris.connect(p):
+                    connected = True
                     break
             
-            return None
+            if not connected:
+                self.title.setText("Нет активного проигрывателя")
+                self.artist.setText("")
+                self.art.clear()
+                self.time.setText("0:00")
+                self.duration.setText("0:00")
+                self.slider.setValue(0)
+                self.play.setText("")
+                return
         
-        md = self.mpris.metadata()
-        
-        set_elided_text(self.title, md.get('title', ''))
-        set_elided_text(self.artist, md.get('artist', ''))
-        
-        if md.get('art') != self.mpris.last_art:
-            self.mpris.last_art = md.get('art')
+        try:
+            md = self.mpris.metadata()
             
-            AlbumArtLoader.load_artwork(md.get('art'), self.art)
-        
-        pos = self.mpris.position()
-        dur = md.get('length', 0)
-        
-        if dur:
-            self.slider.setRange(0, int(dur))
-            self.slider.setValue(int(pos))
-            self.time.setText(f"{int(pos)//60}:{int(pos)%60:02d}")
-            self.duration.setText(f"{int(dur)//60}:{int(dur)%60:02d}")
-        
-        self.play.setText("" if self.mpris.status() == 'Playing' else "")
+            if not md:
+                self.mpris.connected = False
+                self.title.setText("Нет активного проигрывателя")
+                self.artist.setText("")
+                
+                return None
+            
+            set_elided_text(self.title, md.get('title', 'Без названия') or 'Без названия')
+            set_elided_text(self.artist, md.get('artist', 'Неизвестный исполнитель') or 'Неизвестный исполнитель')
+            
+            if md.get('art') != self.mpris.last_art:
+                self.mpris.last_art = md.get('art')
+                AlbumArtLoader.load_artwork(md.get('art'), self.art)
+            
+            pos = self.mpris.position()
+            dur = md.get('length', 0)
+            
+            if dur:
+                self.slider.setRange(0, int(dur))
+                self.slider.setValue(int(pos))
+                self.time.setText(f"{int(pos)//60}:{int(pos)%60:02d}")
+                self.duration.setText(f"{int(dur)//60}:{int(dur)%60:02d}")
+            
+            status = self.mpris.status()
+            self.play.setText("" if status == 'Playing' else "")
+            
+        except Exception as exception:
+            print(f"Ошибка при обновлении UI: {exception}")
+            traceback.print_exc()
+            self.mpris.connected = False
     
     
     def keyPressEvent(self, event):
@@ -394,3 +447,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     w = AudioPlayer()
     w.show()
+    sys.exit(app.exec())
