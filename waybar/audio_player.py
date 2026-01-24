@@ -6,7 +6,13 @@ import traceback
 from PIL import Image
 from io import BytesIO
 from urllib.parse import unquote
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import (
+    Qt,
+    QTimer,
+    QPropertyAnimation,
+    QEasingCurve,
+    QPoint
+)
 from dbus.mainloop.glib import DBusGMainLoop
 from PyQt6.QtGui import (
     QImage,
@@ -30,6 +36,7 @@ class AlbumArtLoader:
     @staticmethod
     def rounded_pixmap(pixmap: QPixmap, radius: int) -> QPixmap:
         size = pixmap.size()
+        
         rounded = QPixmap(size)
         rounded.fill(Qt.GlobalColor.transparent)
         
@@ -58,15 +65,16 @@ class AlbumArtLoader:
             
             if art_url.startswith('file://'):
                 try:
-                    with open(unquote(art_url[7:]), 'rb') as f:
-                        image_data = f.read()
+                    with open(unquote(art_url[7:]), 'rb') as file:
+                        image_data = file.read()
                 except:
                     pass
             
             elif art_url.startswith(('http://', 'https://')):
-                r = requests.get(art_url, timeout=5)
-                if r.status_code == 200:
-                    image_data = r.content
+                request = requests.get(art_url, timeout=5)
+                
+                if request.status_code == 200:
+                    image_data = request.content
             
             if not image_data:
                 return None
@@ -74,18 +82,19 @@ class AlbumArtLoader:
             image = Image.open(BytesIO(image_data)).convert('RGB')
             image = image.resize((size, size), Image.Resampling.LANCZOS)
             
-            qimage = QImage(
+            q_image = QImage(
                 image.tobytes('raw', 'RGB'),
                 size, size,
                 size * 3,
                 QImage.Format.Format_RGB888
             )
             
-            pixmap = QPixmap.fromImage(qimage)
+            pixmap = QPixmap.fromImage(q_image)
             pixmap = AlbumArtLoader.rounded_pixmap(pixmap, 14)
+            
             label.setPixmap(pixmap)
         except Exception as exception:
-            print('AlbumArt error:', exception)
+            print(exception)
             label.clear()
 
 
@@ -104,47 +113,94 @@ class MPRIS:
     def get_players(self):
         try:
             return [
-                s for s in self.bus.list_names()
-                if s.startswith('org.mpris.MediaPlayer2.')
+                player for player in self.bus.list_names()
+                if player.startswith('org.mpris.MediaPlayer2.')
             ]
         except:
             return []
     
     
+    def disconnect(self):
+        self.connected = False
+        self.current_player = None
+        self.properties = None
+        self.player = None
+    
+    
+    def _prioritised_players(self):
+        players = self.get_players()
+        
+        if not players:
+            return []
+        
+        
+        def state_key(name):
+            try:
+                object = self.bus.get_object(name, '/org/mpris/MediaPlayer2')
+                properties = dbus.Interface(object, 'org.freedesktop.DBus.Properties')
+                string = str(
+                    properties.Get(
+                        'org.mpris.MediaPlayer2.Player',
+                        'PlaybackStatus'
+                    )
+                )
+                
+                return {'Playing': 0, 'Paused': 1}.get(string, 2)
+            except:
+                return 3
+        
+        players.sort(key=lambda n: (state_key(n), n))
+        
+        return players
+    
+    
+    def connect_any(self):
+        self.disconnect()
+        
+        for candidate in self._prioritised_players():
+            if self.connect(candidate):
+                return True
+        
+        return False
+    
+    
     def connect(self, name):
         try:
-            obj = self.bus.get_object(name, '/org/mpris/MediaPlayer2')
-            
-            self.properties = dbus.Interface(obj, 'org.freedesktop.DBus.Properties')
-            self.player = dbus.Interface(obj, 'org.mpris.MediaPlayer2.Player')
+            object = self.bus.get_object(name, '/org/mpris/MediaPlayer2')
+            self.properties = dbus.Interface(
+                object,
+                'org.freedesktop.DBus.Properties'
+            )
+            self.player = dbus.Interface(object, 'org.mpris.MediaPlayer2.Player')
             self.current_player = name
             self.connected = True
             
             return True
         except:
             self.connected = False
+            
             return False
     
     
     def metadata(self):
         if not self.properties or not self.connected:
             return {}
-        
         try:
-            md = self.properties.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
+            metadata = self.properties.Get(
+                'org.mpris.MediaPlayer2.Player',
+                'Metadata'
+            )
             
             return {
-                'title': md.get('xesam:title', ''),
-                'artist': ', '.join(md.get('xesam:artist', [])),
-                'art': md.get('mpris:artUrl', ''),
-                'length': md.get('mpris:length', 0) / 1_000_000
+                'title': metadata.get('xesam:title', ''),
+                'artist': ', '.join(metadata.get('xesam:artist', [])),
+                'art': metadata.get('mpris:artUrl', ''),
+                'length': metadata.get('mpris:length', 0) / 1_000_000
             }
         except dbus.exceptions.DBusException as e:
-            if "NoActivePlayer" in str(e) or "No player" in str(e):
-                self.connected = False
-                self.properties = None
-                self.player = None
-                self.current_player = None
+            if 'NoActivePlayer' in str(e) or 'No player' in str(e):
+                self.disconnect()
+            
             return {}
         except Exception:
             return {}
@@ -154,6 +210,7 @@ class MPRIS:
         try:
             if not self.properties or not self.connected:
                 return 0
+            
             return self.properties.Get(
                 'org.mpris.MediaPlayer2.Player',
                 'Position'
@@ -166,9 +223,13 @@ class MPRIS:
         try:
             if not self.properties or not self.connected:
                 return 'Stopped'
-            return str(self.properties.Get(
-                'org.mpris.MediaPlayer2.Player', 'PlaybackStatus'
-            ))
+            
+            return str(
+                self.properties.Get(
+                    'org.mpris.MediaPlayer2.Player',
+                    'PlaybackStatus'
+                )
+            )
         except:
             return 'Stopped'
     
@@ -211,28 +272,30 @@ class AudioPlayer(QWidget):
         self.mpris = MPRIS()
         self.build_ui()
         self.start_timer()
+        # self.animate_open()
     
     
     def build_ui(self):
         root = QVBoxLayout(self)
-        root.setSpacing(8)
+        root.setSpacing(0)
         
         art_container = QWidget()
         art_container.setObjectName('art-box')
         art_container.setStyleSheet(
             """
             background-color: rgba(32, 29, 42, 0.85);
-            border-radius: 20px;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
             """
         )
         art_layout = QVBoxLayout(art_container)
-        art_layout.setContentsMargins(8, 8, 8, 8)
+        art_layout.setContentsMargins(8, 8, 8, 0)
         self.art = QLabel()
         self.art.setFixedSize(184, 184)
         self.art.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.art.setStyleSheet(
             """
-            background-color: rgba(10, 9, 8, 0.85);
+            background-color: #aba3c7;
             border-radius: 14px;
             """
         )
@@ -245,13 +308,12 @@ class AudioPlayer(QWidget):
         text_box.setStyleSheet(
             """
             background-color: rgba(32, 29, 42, 0.85);
-            border-radius: 10px;
             color: #efebff;
             """
         )
         text_l = QVBoxLayout(text_box)
         text_l.setContentsMargins(12, 12, 12, 12)
-        self.title = QLabel("Нет подключения")
+        self.title = QLabel('Нет подключения')
         self.title.setFixedSize(176, 18)
         self.title.setStyleSheet(
             """
@@ -259,11 +321,11 @@ class AudioPlayer(QWidget):
             background: none;
             """
         )
-        self.artist = QLabel("")
+        self.artist = QLabel('')
         self.artist.setFixedSize(176, 14)
         self.artist.setStyleSheet(
             """
-            font-size: 10px;
+            font-size: 12px;
             background: none;
             """
         )
@@ -279,28 +341,28 @@ class AudioPlayer(QWidget):
         
         slider_box = QWidget()
         slider_box.setObjectName('slider-box')
-        slider_box.setFixedSize(200, 40)
+        slider_box.setFixedSize(200, 12)
+        slider_box.setContentsMargins(4, 0, 0, 0)
         slider_box.setStyleSheet(
             """
             background-color: rgba(32, 29, 42, 0.85);
-            border-radius: 8px;
             color: #efebff;
             """
         )
         slider_l = QHBoxLayout(slider_box)
-        slider_l.setContentsMargins(12, 8, 12, 8)
-        self.time = QLabel("0:00")
+        slider_l.setContentsMargins(12, 0, 12, 0)
+        self.time = QLabel('0:00')
         self.time.setStyleSheet(
             """
             background: none;
-            font-size: 9px;
+            font-size: 10px;
             """
         )
-        self.duration = QLabel("0:00")
+        self.duration = QLabel('0:00')
         self.duration.setStyleSheet(
             """
             background: none;
-            font-size: 9px;
+            font-size: 10px;
             """
         )
         self.slider = QSlider(Qt.Orientation.Horizontal)
@@ -339,31 +401,41 @@ class AudioPlayer(QWidget):
         
         controls = QWidget()
         controls.setObjectName('controls')
-        controls.setFixedSize(200, 60)
+        controls.setFixedSize(200, 72)
+        controls.setStyleSheet(
+            """
+            background-color: rgba(32, 29, 42, 0.85);
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            """
+        )
         cl = QHBoxLayout(controls)
         cl.setContentsMargins(0, 0, 0, 0)
-        cl.setSpacing(8)
-        self.prev = QPushButton("")
-        self.play = QPushButton("")
-        self.next = QPushButton("")
+        cl.setSpacing(0)
+        
+        self.prev = QPushButton('  ')
+        self.play = QPushButton('')
+        self.next = QPushButton(' ')
+        
         for button in (self.prev, self.play, self.next):
-            button.setFixedSize(60, 60)
+            button.setFixedSize(56, 56)
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            button.setContentsMargins(8, 0, 0, 0)
             button.setStyleSheet(
                 """
                 QPushButton {
-                    background-color: rgba(32, 29, 42, 0.85);
-                    border-radius: 10px;
+                    background-color: #9375f5;
+                    border-radius: 14px;
                     color: #efebff;
-                    text-align: center;
                     font-size: 18px;
                 }
                 
                 QPushButton:hover {
-                    background-color: rgba(10, 9, 8, 0.85);
+                    background-color: #aba3c7;
                 }
                 """
             )
-            button.setCursor(Qt.CursorShape.PointingHandCursor)
+        
         self.prev.clicked.connect(self.mpris.prev)
         self.play.clicked.connect(self.mpris.play_pause)
         self.next.clicked.connect(self.mpris.next)
@@ -379,62 +451,97 @@ class AudioPlayer(QWidget):
         self.timer.start(500)
     
     
+    """def animate_open(self):
+        screen = QApplication.primaryScreen().availableGeometry()
+        start_pos = QPoint(screen.width() // 2 - self.width() // 2, -self.height())
+        end_pos = QPoint(screen.width() // 2 - self.width() // 2, 100)  # конечная позиция на экране
+        
+        self.move(start_pos)
+        self.setWindowOpacity(0)  # полностью прозрачный
+        
+        # Анимация позиции
+        self.pos_anim = QPropertyAnimation(self, b"pos")
+        self.pos_anim.setDuration(600)  # миллисекунды
+        self.pos_anim.setStartValue(start_pos)
+        self.pos_anim.setEndValue(end_pos)
+        self.pos_anim.setEasingCurve(QEasingCurve.Type.OutCubic)  # плавное движение
+        
+        # Анимация прозрачности
+        self.opacity_anim = QPropertyAnimation(self, b"windowOpacity")
+        self.opacity_anim.setDuration(600)
+        self.opacity_anim.setStartValue(0)
+        self.opacity_anim.setEndValue(1)
+        self.opacity_anim.setEasingCurve(QEasingCurve.Type.Linear)
+        
+        # Запускаем одновременно
+        self.pos_anim.start()
+        self.opacity_anim.start()"""
+    
+    
+    def animate_close(self):
+        pass
+    
+    
     def update_ui(self):
         def set_elided_text(label: QLabel, text: str):
-            fm = QFontMetrics(label.font())
-            elided = fm.elidedText(text, Qt.TextElideMode.ElideRight, label.width())
-            label.setText(elided)
+            font_metrics = QFontMetrics(label.font())
+            elided_text = font_metrics.elidedText(text, Qt.TextElideMode.ElideRight, label.width())
+            label.setText(elided_text)
         
         if not self.mpris.connected or not self.mpris.current_player:
             players = self.mpris.get_players()
             connected = False
+            
             for p in players:
                 if self.mpris.connect(p):
                     connected = True
+                    
                     break
             
             if not connected:
-                self.title.setText("Нет активного проигрывателя")
-                self.artist.setText("")
+                self.title.setText('Нет активного проигрывателя')
+                self.artist.setText('')
                 self.art.clear()
-                self.time.setText("0:00")
-                self.duration.setText("0:00")
+                self.time.setText('0:00')
+                self.duration.setText('0:00')
                 self.slider.setValue(0)
-                self.play.setText("")
-                return
+                self.play.setText('')
+                
+                return None
         
         try:
-            md = self.mpris.metadata()
+            metadata = self.mpris.metadata()
             
-            if not md:
+            if not metadata:
                 self.mpris.connected = False
-                self.title.setText("Нет активного проигрывателя")
-                self.artist.setText("")
+                self.title.setText('Нет активного проигрывателя')
+                self.artist.setText('')
                 
                 return None
             
-            set_elided_text(self.title, md.get('title', 'Без названия') or 'Без названия')
-            set_elided_text(self.artist, md.get('artist', 'Неизвестный исполнитель') or 'Неизвестный исполнитель')
+            set_elided_text(self.title, metadata.get('title', 'Без названия') or 'Без названия')
+            set_elided_text(self.artist, metadata.get('artist', 'Неизвестный исполнитель') or 'Неизвестный исполнитель')
             
-            if md.get('art') != self.mpris.last_art:
-                self.mpris.last_art = md.get('art')
-                AlbumArtLoader.load_artwork(md.get('art'), self.art)
+            if metadata.get('art') != self.mpris.last_art:
+                self.mpris.last_art = metadata.get('art')
+                AlbumArtLoader.load_artwork(metadata.get('art'), self.art)
             
-            pos = self.mpris.position()
-            dur = md.get('length', 0)
+            position = self.mpris.position()
+            duration = metadata.get('length', 0)
             
-            if dur:
-                self.slider.setRange(0, int(dur))
-                self.slider.setValue(int(pos))
-                self.time.setText(f"{int(pos)//60}:{int(pos)%60:02d}")
-                self.duration.setText(f"{int(dur)//60}:{int(dur)%60:02d}")
+            if duration:
+                self.slider.setRange(0, int(duration))
+                self.slider.setValue(int(position))
+                self.time.setText(f'{int(position)//60}:{int(position)%60:02d}')
+                self.duration.setText(f'{int(duration)//60}:{int(duration)%60:02d}')
             
             status = self.mpris.status()
-            self.play.setText("" if status == 'Playing' else "")
+            self.play.setText('' if status == 'Playing' else '')
             
         except Exception as exception:
-            print(f"Ошибка при обновлении UI: {exception}")
+            print(exception)
             traceback.print_exc()
+            
             self.mpris.connected = False
     
     
@@ -444,7 +551,7 @@ class AudioPlayer(QWidget):
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    w = AudioPlayer()
-    w.show()
-    sys.exit(app.exec())
+    application = QApplication(sys.argv)
+    widget = AudioPlayer()
+    widget.show()
+    sys.exit(application.exec())
