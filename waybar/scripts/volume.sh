@@ -1,14 +1,30 @@
 #!/bin/bash
- 
-VOL=$(wpctl get-volume @DEFAULT_SINK@ 2>/dev/null | awk '{print int($2*100)}')
-MUTED=$(wpctl get-volume @DEFAULT_SINK@ 2>/dev/null | grep -o "MUTED")
 
-if [ ! -z "$MUTED" ]; then
-    echo '{"text": "<span color=\"#ffc6ff\"></span>"}'
-elif [ "$VOL" -lt 1 ]; then
-    echo '{"text": "<span color=\"#ffc6ff\"></span>", "tooltip": "󰺢  '$VOL'%"}'
-elif [ "$VOL" -gt 0 ] && [ "$VOL" -lt 50 ]; then
-    echo '{"text": "<span color=\"#ffc6ff\"></span>", "tooltip": "󰺢  '$VOL'%"}'
+
+SINK=$(pactl info | grep "Default Sink" | awk '{print $3}')
+
+if [ -z "$SINK" ]; then
+    VOLUME=0
+    IS_MUTED=false
 else
-    echo '{"text": "<span color=\"#ffc6ff\"></span>", "tooltip": "󰺢  '$VOL'%"}'
+    VOLUME=$(pactl get-sink-volume "$SINK" | awk 'NR==1{print int($5)}')
+    IS_MUTED=$(pactl get-sink-mute "$SINK" | awk '{print $2}')
+
+    if [ "$IS_MUTED" == "yes" ]; then
+        IS_MUTED=true
+    else
+        IS_MUTED=false
+    fi
 fi
+
+if [ "$IS_MUTED" = "true" ]; then
+    ICON=""
+elif [ "$VOLUME" -lt 1 ]; then
+    ICON=" "
+elif [ "$VOLUME" -lt 50 ]; then
+    ICON=" "
+else
+    ICON=""
+fi
+
+echo "{\"text\": \"<span color=\\\"#ffc6ff\\\">$ICON</span>\", \"tooltip\": \"󰺢  $VOLUME%\"}"
