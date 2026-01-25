@@ -1,91 +1,104 @@
 {
-  "layer": "top",
-  "position": "top",
-  "height": 56,
-  "modules-left": ["temperature", "cpu", "memory"],
-  "modules-center": ["hyprland/workspaces", "custom/new-workspace"],
-  "modules-right": ["clock", "network", "bluetooth", "custom/volume", "battery", "custom/power"],
-  "hyprland/workspaces": {
-    "format": "{icon}",
-    "format-icons": {
-      "default": "<span color='#FFFACD'>⚫</span>",
-      "active": "<span color='#fdff00'>󰮯</span>",
-      "urgent": "<span color='#ea82e5'>󰊠</span>"
+	"layer": "top",
+    "position": "top",
+    "height": 56,
+    "margin-bottom": -8,
+    "modules-left": ["temperature", "cpu", "memory"],
+    "modules-center": ["hyprland/workspaces", "custom/new-workspace"],
+    "modules-right": ["custom/audio-player", "clock", "network", "bluetooth", "custom/volume", "battery", "custom/power"],
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "format-icons": {
+            "default": "<span color='#FFFACD'>⚫</span>",
+            "active": "<span color='#fdff00'>󰮯</span>",
+            "urgent": "<span color='#ea82e5'>󰊠</span>"
+        },
+        "persistent_workspaces": {
+            "*": 10
+        }
     },
-    "persistent_workspaces": {
-      "*": 10
-    }
-  },
-  "custom/new-workspace": {
-    "format": "󰊠",
-    "on-click": "hyprctl dispatch workspace empty",
-    "tooltip": false
-  },
-  "temperature": {
-    "format": "<span color='#ffadad'>{icon}</span> {temperatureC}°C",
-    "format-icons": {
-      "default": "",
-      "low": "",
-      "normal": "",
-      "high": "",
-      "critical": ""
+    "custom/new-workspace": {
+        "format": "󰊠",
+        "on-click": "hyprctl dispatch workspace empty",
+        "tooltip": false
     },
-    "critical-threshold": 80,
-    "interval": 5,
-    "tooltip": false
-  },
-  "cpu": {
-    "format": "<span color='#ffd6a5'></span> {usage}%",
-    "interval": 5,
-	"tooltip": false,
-	"on-click": "kitty btop"
-  },
-  "memory": {
-    "format": "<span color='#caffbf'>\uefc5</span> {percentage}%",
-    "interval": 5,
-	"tooltip": false,
-	"on-click": "kitty btop"
-  },
-  "clock": {
-    "format": "<span color='#9bf6ff'></span> {:%H:%M}",
-    "tooltip-format": "󰸗 {:%d.%m.%Y}",
-    "interval": 60
-  },
-  "network": {
-    "format-ethernet": "<span color='#a0c4ff'>󰈀</span>",
-    "format-wifi": "<span color='#a0c4ff'>󰖩</span>",
-    "format-disconnected": "<span color='#a0c4ff'>󰪎</span>",
-    "tooltip": true,
-    "tooltip-format": " {ifname}\n󰑩 {essid}\n󰣺 {signalStrength}%",
-	"on-click": "kitty connmanctl"
-  },
-  "bluetooth": {
-	"format": "<span color='#bdb2ff'>󰂯</span>",
-    "format-connected": "<span color='#bdb2ff'>󰂱</span>",
-    "format-disconnected": "<span color='#bdb2ff'>󰂯</span>",
-    "format-disabled": "<span color='#bdb2ff'>󰂲</span>",
-    "interval": 5,
-	"tooltip-format-connected": "󰾰 {device_alias}",
-	"on-click": "kitty bluetoothctl"
-  },
+    "temperature": {
+        "format": "<span color='#ffadad'>{icon}</span> {temperatureC}°C",
+        "format-icons": {
+            "default": "",
+            "low": "",
+            "normal": "",
+            "high": "",
+            "critical": ""
+        },
+        "critical-threshold": 80,
+        "interval": 5,
+        "tooltip": false
+    },
+    "cpu": {
+        "format": "<span color='#ffd6a5'></span> {usage}%",
+        "interval": 5,
+	   "tooltip": false,
+    	"on-click": "kitty btop"
+    },
+    "memory": {
+        "format": "<span color='#caffbf'>\uefc5</span> {percentage}%",
+        "interval": 5,
+	   "tooltip": false,
+    	"on-click": "kitty btop"
+    },
+    "custom/audio-player": {
+        "format": "{}",
+        "exec": "$HOME/.config/waybar/scripts/audio_player.sh",
+        "return-type": "plain",
+        "interval": 5,
+        "on-click": "$HOME/.config/waybar/scripts/singleton.sh audio_player.py",
+        "tooltip": false
+    },
+    "clock": {
+        "format": "<span color='#9bf6ff'></span>  {:%H:%M}",
+        "tooltip": true,
+        "tooltip-format": "󰸗 {:%d.%m.%Y}",
+        "interval": 60
+    },
+    "network": {
+        "format-ethernet": "<span color='#a0c4ff'>󰈀</span>",
+        "format-wifi": "<span color='#a0c4ff'>󰖩</span>",
+        "format-disconnected": "<span color='#a0c4ff'>󰪎</span>",
+        "tooltip": true,
+        "tooltip-format": " {ifname}\n󰑩 {essid}\n󰣺 {signalStrength}%",
+	   "on-click": "kitty iwctl",
+	   "hide-on-disconnected": false
+    },
+  	"bluetooth": {
+		"format": "<span color='#bdb2ff'>󰂯</span>",
+    	"format-connected": "<span color='#bdb2ff'>󰂱</span>",
+    	"format-disconnected": "<span color='#bdb2ff'>󰂯</span>",
+		"format-disabled": "<span color='#bdb2ff'>󰂲</span>",
+    	"interval": 5,
+		"tooltip-format-connected": "󰾰 {device_alias}",
+		"on-click": "kitty bluetoothctl"
+  	},
 	"custom/volume": {
 		"format": "{}",
-    		"exec": "/home/arch/.config/waybar/scripts/volume.sh",
-    		"return-type": "json",
-    		"interval": 5,
-    		"on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
-    		"on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +5%",
-    		"on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -5%"
+    	"exec": "$HOME/.config/waybar/scripts/volume.sh",
+    	"return-type": "json",
+    	"interval": 5,
+    	"on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+		"on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +5%",
+		"on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -5%",
+		"hide-on-disconnected": false
 	},
-  "battery": {
-    "format": "<span color='#ff9ed7'>{icon}</span>",
-	"tooltip-format": "󱐋 {capacity}%",
-    "format-icons": ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"],
-    "interval": 5
-  },
-  "custom/power": {
-    "format": "",
-    "on-click": "wlogout",
-    "tooltip": false
-  }
+  	"battery": {
+        "format": "<span color='#ff9ed7'>{icon}</span>",
+        "tooltip-format": "󱐋 {capacity}%",
+    	"format-icons": ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"],
+		"interval": 5
+  	},
+  	"custom/power": {
+		"format": "",
+        "on-click": "$HOME/.config/waybar/scripts/singleton.sh power_menu.py",
+        "on-double-click": "systemctl poweroff",
+        "tooltip": false
+  	}
 }
